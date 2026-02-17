@@ -19,15 +19,24 @@ serviceInstanceId: process.env.COS_INSTANCE_ID
 const BUCKET_NAME = process.env.COS_BUCKET_NAME;
 const METADATA_KEY = 'metadata.json';
 
-// Middleware
+/ Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
+
+// Trust Code Engine load balancer (CRITICAL FIX)
+app.set('trust proxy', 1);
+
 app.use(session({
 secret: process.env.SESSION_SECRET,
 resave: false,
 saveUninitialized: false,
-cookie: { maxAge: 3600000 } // 1 hour
+cookie: { 
+  secure: true,      // Now safe because we trust proxy
+  httpOnly: true,    // Security: prevent XSS attacks
+  sameSite: 'lax',   // Security: CSRF protection
+  maxAge: 3600000    // 1 hour (keep existing)
+}
 }));
 
 // Multer configuration for file uploads
