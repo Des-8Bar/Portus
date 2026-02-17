@@ -217,7 +217,7 @@ try {
   await updateMetadata(metadata);
 
   // Generate download URL
-  const downloadUrl = `${process.env.DOWNLOAD_SERVICE_URL}/download/${assetId}?token=${password}`;
+  const downloadUrl = `${process.env.DOWNLOAD_SERVICE_URL}/download/${assetId}?token=${encodeURIComponent(password)}`;
 
   res.json({ 
     success: true, 
