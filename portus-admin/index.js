@@ -5,7 +5,7 @@ const multer = require('multer');
 const IBM = require('ibm-cos-sdk');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
-
+const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
