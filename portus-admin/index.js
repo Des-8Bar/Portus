@@ -19,7 +19,7 @@ serviceInstanceId: process.env.COS_INSTANCE_ID
 const BUCKET_NAME = process.env.COS_BUCKET_NAME;
 const METADATA_KEY = 'metadata.json';
 
-/ Middleware
+//Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
