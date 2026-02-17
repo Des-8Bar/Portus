@@ -6,6 +6,9 @@
     <title>PORTUS - Admin Dashboard</title>
     <link rel="stylesheet" href="/styles.css">
 </head>
+<script>
+const DOWNLOAD_SERVICE_URL = 'DOWNLOAD_SERVICE_URL_PLACEHOLDER';
+</script>
 <body>
     <div class="dashboard-container">
         <header>
@@ -138,7 +141,7 @@
                 `;
                 
                 data.assets.forEach(asset => {
-                    const downloadUrl = `${window.location.protocol}//${window.location.hostname}:8080/download/${asset.assetId}?token=${asset.password}`;
+                    const downloadUrl = `${DOWNLOAD_SERVICE_URL}/download/${asset.assetId}?token=${encodeURIComponent(asset.password)}`;
                     tableHTML += `
                         <tr>
                             <td><code>${asset.assetId}</code></td>

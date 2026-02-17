@@ -142,8 +142,10 @@ res.redirect('/');
 });
 
 // Dashboard
-app.get('/dashboard', requireAuth, (req, res) => {
-res.sendFile(path.join(__dirname, 'views', 'dashboard.html'));
+app.get('/dashboard', (req, res) => {
+let html = fs.readFileSync(__dirname + '/views/dashboard.html', 'utf8');
+html = html.replace('DOWNLOAD_SERVICE_URL_PLACEHOLDER', process.env.DOWNLOAD_SERVICE_URL);
+res.send(html);
 });
 
 // API: Get all files
