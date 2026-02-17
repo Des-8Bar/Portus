@@ -1,0 +1,20 @@
+{
+"name": "portus-admin",
+"version": "1.0.0",
+"description": "PORTUS Admin Portal",
+"main": "index.js",
+"scripts": {
+  "start": "node index.js"
+},
+"dependencies": {
+  "express": "^4.18.2",
+  "express-session": "^1.17.3",
+  "ibm-cos-sdk": "^1.14.0",
+  "dotenv": "^16.3.1",
+  "multer": "^1.4.5-lts.1",
+  "uuid": "^9.0.1"
+},
+"engines": {
+  "node": ">=18"
+}
+}

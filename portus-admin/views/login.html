@@ -1,0 +1,62 @@
+
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PORTUS - Admin Login</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <h1>PORTUS</h1>
+            <p class="subtitle">Protected Object Repository &amp; Transfer Utility System</p>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required="" autofocus="">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required="">
+                </div>
+                
+                <div id="errorMessage" class="error-message"></div>
+                
+                <button type="submit" class="btn-primary">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('errorMessage');
+            
+            errorMessage.textContent = '';
+            
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = '/dashboard';
+                } else {
+                    errorMessage.textContent = data.message || 'Invalid credentials';
+                }
+            } catch (error) {
+                errorMessage.textContent = 'Login failed. Please try again.';
+            }
+        });
+    </script>
+
+</body></html>

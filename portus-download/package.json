@@ -1,0 +1,17 @@
+{
+"name": "portus-download",
+"version": "1.0.0",
+"description": "PORTUS Download Service",
+"main": "index.js",
+"scripts": {
+  "start": "node index.js"
+},
+"dependencies": {
+  "express": "^4.18.2",
+  "ibm-cos-sdk": "^1.14.0",
+  "dotenv": "^16.3.1"
+},
+"engines": {
+  "node": ">=18"
+}
+}

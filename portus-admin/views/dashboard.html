@@ -1,0 +1,245 @@
+
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PORTUS - Admin Dashboard</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header>
+            <div class="header-content">
+                <h1>PORTUS Admin</h1>
+                <a href="/logout" class="btn-logout">Logout</a>
+            </div>
+        </header>
+
+        <main>
+            <div class="section">
+                <h2>Upload New Asset</h2>
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="file">Select File (PDF)</label>
+                            <input type="file" id="file" name="file" accept=".pdf" required="">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="folderPath">Folder Path (optional)</label>
+                            <input type="text" id="folderPath" name="folderPath" placeholder="e.g., documents/2026">
+                            <small>Leave empty to upload to root</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="password">Download Password</label>
+                            <input type="text" id="password" name="password" required="">
+                            <small>Must contain: uppercase, number, special character</small>
+                        </div>
+                    </div>
+                    
+                    <div id="uploadMessage" class="message"></div>
+                    
+                    <button type="submit" class="btn-primary">Upload &amp; Generate URL</button>
+                </form>
+            </div>
+
+            <div class="section">
+                <h2>Asset Library</h2>
+                <div id="assetsContainer">
+                    <p class="loading">Loading assets...</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>File Tree (COS Bucket)</h2>
+                <div id="filesContainer">
+                    <p class="loading">Loading files...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Load assets on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAssets();
+            loadFiles();
+        });
+
+        // Upload form handler
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const uploadMessage = document.getElementById('uploadMessage');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            
+            uploadMessage.textContent = 'Uploading...';
+            uploadMessage.className = 'message info';
+            submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    uploadMessage.innerHTML = `
+                        <strong>Success!</strong> Asset created.<br>
+                        <strong>Download URL:</strong> 
+                        <input type="text" value="${data.downloadUrl}" readonly style="width: 100%; margin-top: 8px;">
+                        <button onclick="copyToClipboard('${data.downloadUrl}')" class="btn-copy">Copy URL</button>
+                    `;
+                    uploadMessage.className = 'message success';
+                    e.target.reset();
+                    loadAssets();
+                    loadFiles();
+                } else {
+                    uploadMessage.textContent = `Error: ${data.message}`;
+                    uploadMessage.className = 'message error';
+                }
+            } catch (error) {
+                uploadMessage.textContent = `Upload failed: ${error.message}`;
+                uploadMessage.className = 'message error';
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Load assets
+        async function loadAssets() {
+            try {
+                const response = await fetch('/api/assets');
+                const data = await response.json();
+                
+                const container = document.getElementById('assetsContainer');
+                
+                if (data.assets.length === 0) {
+                    container.innerHTML = '<p class="empty">No assets yet</p>';
+                    return;
+                }
+                
+                let tableHTML = `
+                    <table class="asset-table">
+                        <thead>
+                            <tr>
+                                <th>Asset ID</th>
+                                <th>File Name</th>
+                                <th>Created</th>
+                                <th>Download URL</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                data.assets.forEach(asset => {
+                    const downloadUrl = `${window.location.protocol}//${window.location.hostname}:8080/download/${asset.assetId}?token=${asset.password}`;
+                    tableHTML += `
+                        <tr>
+                            <td><code>${asset.assetId}</code></td>
+                            <td>${asset.fileName}</td>
+                            <td>${new Date(asset.createdAt).toLocaleString()}</td>
+                            <td>
+                                <input type="text" value="${downloadUrl}" readonly class="url-field">
+                            </td>
+                            <td>
+                                <button onclick="copyToClipboard('${downloadUrl}')" class="btn-small">Copy</button>
+                                <button onclick="deleteAsset('${asset.assetId}')" class="btn-small btn-danger">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                tableHTML += `
+                        </tbody>
+                    </table>
+                `;
+                
+                container.innerHTML = tableHTML;
+            } catch (error) {
+                document.getElementById('assetsContainer').innerHTML = `<p class="error">Failed to load assets: ${error.message}</p>`;
+            }
+        }
+
+        // Load files
+        async function loadFiles() {
+            try {
+                const response = await fetch('/api/files');
+                const data = await response.json();
+                
+                const container = document.getElementById('filesContainer');
+                
+                if (data.files.length === 0) {
+                    container.innerHTML = '<p class="empty">No files in bucket</p>';
+                    return;
+                }
+                
+                let listHTML = '<ul class="file-tree">';
+                
+                data.files.forEach(file => {
+                    listHTML += `
+                        <li>
+                            <strong>${file.key}</strong>
+                            <span class="file-meta">(${formatBytes(file.size)} - ${new Date(file.lastModified).toLocaleString()})</span>
+                        </li>
+                    `;
+                });
+                
+                listHTML += '</ul>';
+                
+                container.innerHTML = listHTML;
+            } catch (error) {
+                document.getElementById('filesContainer').innerHTML = `<p class="error">Failed to load files: ${error.message}</p>`;
+            }
+        }
+
+        // Delete asset
+        async function deleteAsset(assetId) {
+            if (!confirm('Delete this asset? This will remove the file from storage and invalidate the download URL.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/assets/${assetId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Asset deleted successfully');
+                    loadAssets();
+                    loadFiles();
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            } catch (error) {
+                alert(`Delete failed: ${error.message}`);
+            }
+        }
+
+        // Copy to clipboard
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('URL copied to clipboard!');
+            }).catch(err => {
+                alert('Failed to copy URL');
+            });
+        }
+
+        // Format bytes
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+    </script>
+
+</body></html>
